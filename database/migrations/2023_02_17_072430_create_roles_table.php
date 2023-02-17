@@ -11,20 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('roles', function (Blueprint $table) {
             $table->uuid('id', 36)->primary();
-            $table->string('first_name', 51);
-            $table->string('last_name', 51)->nullable();
-            $table->string('email', 51)->unique()->nullable();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password', 255);
+            $table->string('name', 51);
+            $table->string('description', 151);
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_first_login')->default(true);
-            $table->string('code', 6)->nullable();
-            $table->enum('type', ['superadmin', 'admin', 'user'])->default('user');
-            $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
+            $table->char('created_by', 36)->nullable();
+            $table->foreign('created_by')->references('id')->on('users');
+            $table->char('updated_by', 36)->nullable();
+            $table->foreign('updated_by')->references('id')->on('users');
+            $table->char('deleted_by', 36)->nullable();
+            $table->foreign('deleted_by')->references('id')->on('users');
             $table->boolean('is_deleted')->default(false)->nullable();
         });
     }
@@ -34,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('roles');
     }
 };
