@@ -28,7 +28,10 @@ Route::prefix('v1')->group(function () {
         Route::post('create', 'create');
         Route::get('show/{id}', 'show');
         Route::post('update/{id}', 'update');
-        Route::delete('delete/{id}', 'delete');
+        // Route::delete('delete/{id}', 'delete');
+        Route::post('softDelete/{id}', 'softDelete');
+        Route::get('restore/{id}', 'restore');
+        Route::get('restoreAll', 'restoreAll');
     });
 
     Route::controller(PermissionController::class)->prefix('permission')->group(function () {
@@ -36,7 +39,10 @@ Route::prefix('v1')->group(function () {
         Route::post('create', 'create');
         Route::get('show/{id}', 'show');
         Route::post('update/{id}', 'update');
-        Route::delete('delete/{id}', 'destroy');
+        // Route::delete('delete/{id}', 'delete');
+        Route::post('softDelete/{id}', 'softDelete');
+        Route::get('restore/{id}', 'restore');
+        Route::get('restoreAll', 'restoreAll');
     });
 
     Route::controller(RoleController::class)->prefix('role')->group(function () {
@@ -44,7 +50,10 @@ Route::prefix('v1')->group(function () {
         Route::post('create', 'create');
         Route::get('show/{id}', 'show');
         Route::post('update/{id}', 'update');
-        Route::delete('delete/{id}', 'destroy');
+        // Route::delete('delete/{id}', 'delete');
+        Route::post('softDelete/{id}', 'softDelete');
+        Route::get('restore/{id}', 'restore');
+        Route::get('restoreAll', 'restoreAll');
     });
 
     Route::controller(UserController::class)->prefix('user')->group(function () {
@@ -52,6 +61,9 @@ Route::prefix('v1')->group(function () {
         Route::post('create', 'create');
         Route::get('show/{id}', 'show');
         Route::post('update/{id}', 'update');
-        Route::delete('delete/{id}', 'destroy');
+        // Route::delete('delete/{id}', 'delete');
+        Route::post('softDelete/{id}', 'softDelete');
+        Route::get('restore/{id}', 'restore');
+        Route::get('restoreAll', 'restoreAll');
     });
 });

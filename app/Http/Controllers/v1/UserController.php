@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\v1;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
+    /*
+        Listing of Users and Roles Data
+        Showing Data with json response
+    */
     public function list()
     {
         $user = User::all();
@@ -29,6 +34,8 @@ class UserController extends Controller
             'password_confirmation'  => 'required|same:password',
             'code'                   => 'required',
             'type'                   => 'required',
+            'roles.*'               => 'required|array',
+            'roles.*.role_id'        => 'required|string'
         ]);
         $request['password'] = Hash::make($request->password);
         $user = User::create($request->only('first_name', 'last_name', 'email', 'password', 'code', 'type'));
@@ -36,13 +43,13 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Created Successfully",
-            'data'    => $user
+            'data'    => $user->load('roles')
         ]);
     }
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('roles')->findOrFail($id);
         return response()->json([
             'success' => true,
             'data' => $user
@@ -53,25 +60,58 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         $request->validate([
-            'first_name' => 'required|alpha',
-            'last_name' => 'required|alpha',
-            'email'     => 'required|email',
-            'code'      => 'required|max:6',
-            'type'      => 'required',
+            'first_name'         => 'required|alpha',
+            'last_name'          => 'required|alpha',
+            'email'              => 'required|email',
+            'code'               => 'required|max:6',
+            'type'               => 'required',
+            'roles.*'            => 'required|array',
+            'roles.*.role_id'    => 'required|string'
         ]);
         $user->update($request->only('first_name', 'last_name', 'email', 'code', 'type'));
+        $user->roles()->sync($request->roles);
         return response()->json([
             'success' => true,
             'message' => "Updated Successfully",
         ]);
     }
 
-    public function delete($id)
+    // public function delete($id)
+    // {
+    //     $user = User::findOrFail($id);
+    //     if ($user->roles()->count() > 0) {
+    //         $user->roles()->detach();
+    //     }
+    //     $user->delete();
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => "Deleted Successfully",
+    //     ]);
+    // }
+
+    /*
+        Soft and Hard Deletion of Users Data
+    */
+    public function softDelete(Request $request, $id)
     {
-        User::findOrFail($id)->delete();
+        $user = User::findOrFail($id);
+        $request->validate([
+            'softDelete'   => 'required|bool',
+        ]);
+        if ($request->softDelete) {
+            if ($user->roles()->count() > 0) {
+                $user->roles()->detach();
+            }
+            $user->delete();
+        } else {
+            if ($user->roles()->count() > 0) {
+                $user->roles()->detach();
+            }
+            $user->forceDelete();
+        }
         return response()->json([
             'success' => true,
-            'message' => "Deleted Successfully",
+            'message' => "Soft Deleted Successfully",
         ]);
     }
 }
