@@ -14,13 +14,28 @@ class UserController extends Controller
         Listing of Users and Roles Data
         Showing Data with json response
     */
-    public function list()
+    public function list(Request $request)
     {
-        $user = User::all();
+        $request->validate([
+            'first_name'    => 'required|string',
+            'sortOrder'     => 'required|in:asc,desc',
+            'sortField'     => 'required|string',
+            'perpage'       => 'required|integer',
+            'currentPage'   => 'required|integer'
+        ]);
+        $users = User::query()->where("first_name", "LIKE", "%{$request->first_name}%");
+        if ($request->sortField && $request->sortOrder) {
+            $users = $users->orderBy($request->sortField, $request->sortOrder);
+        } else {
+            $users = $users->orderBy('id', 'DESC');
+        };
+        $perpage = $request->perpage;
+        $currentPage = $request->currentPage;
+        $users = $users->skip($perpage * ($currentPage - 1))->take($perpage);
         return response()->json([
             'success' => true,
             'message' => "User View",
-            'data'    => $user
+            'data'    => $users->get()
         ]);
     }
 
@@ -76,19 +91,6 @@ class UserController extends Controller
         ]);
     }
 
-    // public function delete($id)
-    // {
-    //     $user = User::findOrFail($id);
-    //     if ($user->roles()->count() > 0) {
-    //         $user->roles()->detach();
-    //     }
-    //     $user->delete();
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => "Deleted Successfully",
-    //     ]);
-    // }
-
     /*
         Soft and Hard Deletion of Users Data
     */
@@ -112,6 +114,24 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Soft Deleted Successfully",
+        ]);
+    }
+
+    public function restore($id)
+    {
+        User::withTrashed()->find($id)->restore();
+        return response()->json([
+            'success' => true,
+            'message' => "Restored Data Successfully",
+        ]);
+    }
+
+    public function restoreAll()
+    {
+        User::onlyTrashed()->restore();
+        return response()->json([
+            'success' => true,
+            'message' => "Restored All Data Successfully",
         ]);
     }
 }

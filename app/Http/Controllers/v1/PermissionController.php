@@ -13,13 +13,28 @@ class PermissionController extends Controller
         Listing of Permission and Modules Data
         Showing Data with json response
     */
-    public function list()
+    public function list(Request $request)
     {
-        $permission = Permission::all();
+        $request->validate([
+            'name'          => 'required|string',
+            'sortOrder'     => 'required|in:asc,desc',
+            'sortField'     => 'required|string',
+            'perpage'       => 'required|integer',
+            'currentPage'   => 'required|integer'
+        ]);
+        $permissions = Permission::query()->where("name", "LIKE", "%{$request->name}%");
+        if ($request->sortField && $request->sortOrder) {
+            $permissions = $permissions->orderBy($request->sortField, $request->sortOrder);
+        } else {
+            $permissions = $permissions->orderBy('id', 'DESC');
+        }
+        $perpage = $request->perpage;
+        $currentPage = $request->currentPage;
+        $permissions = $permissions->skip($perpage * ($currentPage - 1))->take($perpage);
         return response()->json([
             'success' => true,
             'message' => "Permission View",
-            'data'    => $permission
+            'data'    => $permissions->get()
         ]);
     }
 
@@ -101,23 +116,6 @@ class PermissionController extends Controller
     }
 
     /*
-        Deletion of Permissions Data
-        Checking Foreign key data also deleted
-    */
-    // public function delete($id)
-    // {
-    //     $permission = Permission::findOrFail($id);
-    //     if ($permission->modules()->count() > 0) {
-    //         $permission->modules()->delete();
-    //     }
-    //     $permission->forceDelete();
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => "Deleted Successfully",
-    //     ]);
-    // }
-
-    /*
         Soft and Hard Deletion of Permissions Data
     */
     public function softDelete(Request $request, $id)
@@ -133,7 +131,7 @@ class PermissionController extends Controller
             $permission->delete();
         } else {
             if ($permission->modules()->count() > 0) {
-                $permission->modules()->delete();
+                $permission->modules()->forceDelete();
             }
             $permission->forceDelete();
         }
@@ -145,7 +143,8 @@ class PermissionController extends Controller
 
     public function restore($id)
     {
-        Permission::withTrashed()->find($id)->restore();
+        Permission::whereId($id)->withTrashed()->restore();
+        ModulePermission::where('permission_id', $id)->withTrashed()->restore();
         return response()->json([
             'success' => true,
             'message' => "Restored Data Successfully",
@@ -155,6 +154,7 @@ class PermissionController extends Controller
     public function restoreAll()
     {
         Permission::onlyTrashed()->restore();
+        ModulePermission::onlyTrashed()->restore();
         return response()->json([
             'success' => true,
             'message' => "Restored All Data Successfully",

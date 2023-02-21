@@ -13,13 +13,28 @@ class ModuleController extends Controller
         Listing of Modules Data
         Showing Data with json response
     */
-    public function list()
+    public function list(Request $request)
     {
-        $modules = Module::all();
+        $request->validate([
+            'name'          => 'required|string',
+            'sortOrder'     => 'required|in:asc,desc',
+            'sortField'     => 'required|string',
+            'perpage'       => 'required|integer',
+            'currentPage'   => 'required|integer'
+        ]);
+        $modules = Module::query()->where("name", "LIKE", "%{$request->name}%");
+        if ($request->sortField && $request->sortOrder) {
+            $modules = $modules->orderBy($request->sortField, $request->sortOrder);
+        } else {
+            $modules = $modules->orderBy('id', 'DESC');
+        };
+        $perpage = $request->perpage;
+        $currentPage = $request->currentPage;
+        $modules = $modules->skip($perpage * ($currentPage - 1))->take($perpage);
         return response()->json([
             'success'   => true,
             'message'   => "Module List",
-            'data'      => $modules
+            'data'      => $modules->get()
         ]);
     }
 
@@ -73,18 +88,6 @@ class ModuleController extends Controller
             'message' => "Updated Successfully",
         ]);
     }
-
-    // /*
-    //     Deletion of Modules Data
-    // */
-    // public function delete($id)
-    // {
-    //     Module::findOrFail($id)->forceDelete();
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => "Deleted Successfully",
-    //     ]);
-    // }
 
     /*
         Soft and Hard Deletion of Modules Data

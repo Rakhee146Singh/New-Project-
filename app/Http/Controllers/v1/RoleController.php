@@ -13,13 +13,28 @@ class RoleController extends Controller
         Listing of Roles and Permissions Data
         Showing Data with json response
     */
-    public function list()
+    public function list(Request $request)
     {
-        $role = Role::all();
+        $request->validate([
+            'name'          => 'required|string',
+            'sortOrder'     => 'required|in:asc,desc',
+            'sortField'     => 'required|string',
+            'perpage'       => 'required|integer',
+            'currentPage'   => 'required|integer'
+        ]);
+        $roles = Role::query()->where("name", "LIKE", "%{$request->name}%");
+        if ($request->sortField && $request->sortOrder) {
+            $roles = $roles->orderBy($request->sortField, $request->sortOrder);
+        } else {
+            $roles = $roles->orderBy('id', 'DESC');
+        }
+        $perpage = $request->perpage;
+        $currentPage = $request->currentPage;
+        $roles = $roles->skip($perpage * ($currentPage - 1))->take($perpage);
         return response()->json([
             'success' => true,
             'message' => "Role View",
-            'data'    => $role
+            'data'    => $roles->get()
         ]);
     }
 
@@ -66,19 +81,6 @@ class RoleController extends Controller
         ]);
     }
 
-    // public function delete($id)
-    // {
-    //     $role = Role::findOrFail($id);
-    //     if ($role->permissions()->count() > 0) {
-    //         $role->permissions()->detach();
-    //     }
-    //     $role->forceDelete();
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => "Deleted Successfully",
-    //     ]);
-    // }
-
     /*
         Soft Deletion of Roles Data
     */
@@ -102,6 +104,24 @@ class RoleController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Soft Deleted Successfully",
+        ]);
+    }
+
+    public function restore($id)
+    {
+        Role::withTrashed()->find($id)->restore();
+        return response()->json([
+            'success' => true,
+            'message' => "Restored Data Successfully",
+        ]);
+    }
+
+    public function restoreAll()
+    {
+        Role::onlyTrashed()->restore();
+        return response()->json([
+            'success' => true,
+            'message' => "Restored All Data Successfully",
         ]);
     }
 }
