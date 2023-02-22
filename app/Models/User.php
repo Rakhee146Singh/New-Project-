@@ -51,8 +51,15 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    //Function for user belongs to many roles
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_users');
+    }
+
+    //function for checking access of users is true or false
+    public function hasAccess($modules, $permissions)
+    {
+        return $this->roles()->first()->hasRole($modules, $permissions);
     }
 }

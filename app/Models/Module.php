@@ -9,11 +9,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Module extends Model
 {
-    use Uuids;
+    use HasFactory, SoftDeletes, Uuids;
 
-    use HasFactory, SoftDeletes;
     protected $dates = ['deleted_at'];
-
 
     public $table = 'modules';
 
@@ -24,6 +22,7 @@ class Module extends Model
         'is_in_menu'
     ];
 
+    //Function for module belongs to many permissions
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'module_permissions');

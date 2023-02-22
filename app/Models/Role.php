@@ -9,9 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Role extends Model
 {
-    use HasFactory, Uuids;
+    use HasFactory, SoftDeletes, Uuids;
 
-    use SoftDeletes;
     protected $dates = ['deleted_at'];
 
     public $table = 'roles';
@@ -22,13 +21,21 @@ class Role extends Model
         'is_active',
     ];
 
+    //Function for role belongs to many users
     public function users()
     {
         return $this->belongsToMany(User::class, 'role_users');
     }
 
+    //Function for role belongs to many permissions
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'permission_roles');
+    }
+
+    //function for checking access of roles is true or false
+    public function hasRole($modules, $permissions)
+    {
+        return $this->permissions()->first()->hasPermission($modules, $permissions);
     }
 }

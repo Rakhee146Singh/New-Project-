@@ -10,11 +10,12 @@ use App\Http\Controllers\Controller;
 class PermissionController extends Controller
 {
     /*
-        Listing of Permission and Modules Data
+        Listing of Permissions and Modules Data
         Showing Data with json response
     */
     public function list(Request $request)
     {
+        //validation for searching,sorting fields
         $request->validate([
             'name'          => 'required|string',
             'sortOrder'     => 'required|in:asc,desc',
@@ -22,15 +23,19 @@ class PermissionController extends Controller
             'perpage'       => 'required|integer',
             'currentPage'   => 'required|integer'
         ]);
+        //pass query for permission with searching,sorting and filters
         $permissions = Permission::query()->where("name", "LIKE", "%{$request->name}%");
         if ($request->sortField && $request->sortOrder) {
             $permissions = $permissions->orderBy($request->sortField, $request->sortOrder);
         } else {
             $permissions = $permissions->orderBy('id', 'DESC');
         }
+        //pagination code
         $perpage = $request->perpage;
         $currentPage = $request->currentPage;
         $permissions = $permissions->skip($perpage * ($currentPage - 1))->take($perpage);
+
+        //response in json with success message
         return response()->json([
             'success' => true,
             'message' => "Permission View",
@@ -39,7 +44,7 @@ class PermissionController extends Controller
     }
 
     /*
-        Create new Permission with multiple module selection
+        Create new Permission with multiple Modules access selection
         Validation of data and reponse with success message
     */
     public function create(Request $request)
@@ -64,8 +69,8 @@ class PermissionController extends Controller
     }
 
     /*
-        Showing Permissions Data
-        fetched data to be edit
+        Showing Permission Data of particaular id
+        fetched data to be updated
     */
     public function show($id)
     {
@@ -77,7 +82,7 @@ class PermissionController extends Controller
     }
 
     /*
-        Updating Permissions and Modules Data
+        Updating Permission with Modules Data
         Validation of data and reponse with updated message
     */
     public function update(Request $request, $id)
@@ -93,6 +98,7 @@ class PermissionController extends Controller
             'modules.*.view_access'     => 'required|bool'
         ]);
 
+        //field to be updated with particular module access to be given
         $permission = Permission::findOrFail($id);
         $permission->update($request->only('name', 'description'));
         foreach ($request['modules'] as $module) {
@@ -116,7 +122,8 @@ class PermissionController extends Controller
     }
 
     /*
-        Soft and Hard Deletion of Permissions Data
+        Soft and Hard Deletion of Permission Data
+        Response in json with success message
     */
     public function softDelete(Request $request, $id)
     {
@@ -137,10 +144,14 @@ class PermissionController extends Controller
         }
         return response()->json([
             'success' => true,
-            'message' => "Soft Deleted Successfully",
+            'message' => "Deleted Successfully",
         ]);
     }
 
+    /*
+        Restore of Permission and Module Data
+        Response in json with success message
+    */
     public function restore($id)
     {
         Permission::whereId($id)->withTrashed()->restore();
@@ -148,16 +159,6 @@ class PermissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Restored Data Successfully",
-        ]);
-    }
-
-    public function restoreAll()
-    {
-        Permission::onlyTrashed()->restore();
-        ModulePermission::onlyTrashed()->restore();
-        return response()->json([
-            'success' => true,
-            'message' => "Restored All Data Successfully",
         ]);
     }
 }

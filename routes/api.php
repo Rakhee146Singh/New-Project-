@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\v1\RoleController;
 use App\Http\Controllers\v1\UserController;
 use App\Http\Controllers\v1\ModuleController;
@@ -22,44 +23,48 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::prefix('v1')->group(function () {
-    Route::controller(ModuleController::class)->prefix('module')->group(function () {
-        Route::post('/', 'list');
-        Route::post('create', 'create');
-        Route::get('show/{id}', 'show');
-        Route::post('update/{id}', 'update');
-        Route::post('softDelete/{id}', 'softDelete');
-        Route::get('restore/{id}', 'restore');
-        Route::get('restoreAll', 'restoreAll');
-    });
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login', [AuthController::class, 'login']);
 
-    Route::controller(PermissionController::class)->prefix('permission')->group(function () {
-        Route::post('/', 'list');
-        Route::post('create', 'create');
-        Route::get('show/{id}', 'show');
-        Route::post('update/{id}', 'update');
-        Route::post('softDelete/{id}', 'softDelete');
-        Route::get('restore/{id}', 'restore');
-        Route::get('restoreAll', 'restoreAll');
-    });
+Route::middleware('auth:sanctum')->group(function () {
 
-    Route::controller(RoleController::class)->prefix('role')->group(function () {
-        Route::post('/', 'list');
-        Route::post('create', 'create');
-        Route::get('show/{id}', 'show');
-        Route::post('update/{id}', 'update');
-        Route::post('softDelete/{id}', 'softDelete');
-        Route::get('restore/{id}', 'restore');
-        Route::get('restoreAll', 'restoreAll');
-    });
+    Route::post('logout', [AuthController::class, 'logout']);
 
-    Route::controller(UserController::class)->prefix('user')->group(function () {
-        Route::post('/', 'list');
-        Route::post('create', 'create');
-        Route::get('show/{id}', 'show');
-        Route::post('update/{id}', 'update');
-        Route::post('softDelete/{id}', 'softDelete');
-        Route::get('restore/{id}', 'restore');
-        Route::get('restoreAll', 'restoreAll');
+    Route::prefix('v1')->group(function () {
+        Route::controller(UserController::class)->prefix('user')->group(function () {
+            Route::post('/', 'list')->middleware('access:abcd,view_access');
+            Route::post('create', 'create')->middleware('access:abcd,add_access');
+            Route::get('show/{id}', 'show')->middleware('access:abcd,view_access');
+            Route::post('update/{id}', 'update')->middleware('access:abcd,edit_access');
+            Route::post('softDelete/{id}', 'softDelete')->middleware('access:abcd,delete_access');
+            Route::get('restore/{id}', 'restore');
+        });
+
+        Route::controller(RoleController::class)->prefix('role')->group(function () {
+            Route::post('/', 'list')->middleware('access:abcd,view_access');
+            Route::post('create', 'create')->middleware('access:abcd,add_access');
+            Route::get('show/{id}', 'show')->middleware('access:abcd,view_access');
+            Route::post('update/{id}', 'update')->middleware('access:abcd,edit_access');
+            Route::post('softDelete/{id}', 'softDelete')->middleware('access:abcd,delete_access');
+            Route::get('restore/{id}', 'restore');
+        });
+
+        Route::controller(PermissionController::class)->prefix('permission')->group(function () {
+            Route::post('/', 'list')->middleware('access:abcd,view_access');
+            Route::post('create', 'create')->middleware('access:abcd,add_access');
+            Route::get('show/{id}', 'show')->middleware('access:abcd,view_access');
+            Route::post('update/{id}', 'update')->middleware('access:abcd,edit_access');
+            Route::post('softDelete/{id}', 'softDelete')->middleware('access:abcd,delete_access');
+            Route::get('restore/{id}', 'restore');
+        });
+
+        Route::controller(ModuleController::class)->prefix('module')->group(function () {
+            Route::post('/', 'list')->middleware('access:abcd,view_access');
+            Route::post('create', 'create')->middleware('access:abcd,add_access');
+            Route::get('show/{id}', 'show')->middleware('access:abcd,view_access');
+            Route::post('update/{id}', 'update')->middleware('access:abcd,edit_access');
+            Route::post('softDelete/{id}', 'softDelete')->middleware('access:abcd,delete_access');
+            Route::get('restore/{id}', 'restore');
+        });
     });
 });

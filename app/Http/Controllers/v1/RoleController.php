@@ -15,6 +15,7 @@ class RoleController extends Controller
     */
     public function list(Request $request)
     {
+        //validation for searching,sorting fields
         $request->validate([
             'name'          => 'required|string',
             'sortOrder'     => 'required|in:asc,desc',
@@ -22,15 +23,19 @@ class RoleController extends Controller
             'perpage'       => 'required|integer',
             'currentPage'   => 'required|integer'
         ]);
+        //pass query for permission with searching,sorting and filters
         $roles = Role::query()->where("name", "LIKE", "%{$request->name}%");
         if ($request->sortField && $request->sortOrder) {
             $roles = $roles->orderBy($request->sortField, $request->sortOrder);
         } else {
             $roles = $roles->orderBy('id', 'DESC');
         }
+        //pagination code
         $perpage = $request->perpage;
         $currentPage = $request->currentPage;
         $roles = $roles->skip($perpage * ($currentPage - 1))->take($perpage);
+
+        //response in json with success message
         return response()->json([
             'success' => true,
             'message' => "Role View",
@@ -38,6 +43,10 @@ class RoleController extends Controller
         ]);
     }
 
+    /*
+        Create new Role and Permissions
+        Validation of data and reponse with success message
+    */
     public function create(Request $request)
     {
         $request->validate([
@@ -47,6 +56,7 @@ class RoleController extends Controller
             'permissions.*.permission_id'   => 'required|string'
         ]);
         $role = Role::create($request->only('name', 'description'));
+        //enter data in pivot table
         $role->permissions()->attach($request->permissions);
         return response()->json([
             'success' => true,
@@ -55,6 +65,10 @@ class RoleController extends Controller
         ]);
     }
 
+    /*
+        Showing Role Data of particular id
+        fetched data to be edited
+    */
     public function show($id)
     {
         $role = Role::with('permissions')->findOrFail($id);
@@ -64,6 +78,10 @@ class RoleController extends Controller
         ]);
     }
 
+    /*
+        Updating Role with Permission Data
+        Validation of data and reponse with updated message
+    */
     public function update(Request $request, $id)
     {
         $role = Role::findOrFail($id);
@@ -82,7 +100,8 @@ class RoleController extends Controller
     }
 
     /*
-        Soft Deletion of Roles Data
+        Soft and Hard Deletion of Role Data
+        Response in json with success message
     */
     public function softDelete(Request $request, $id)
     {
@@ -107,6 +126,10 @@ class RoleController extends Controller
         ]);
     }
 
+    /*
+        Restore of Role Data
+        Response in json with success message
+    */
     public function restore($id)
     {
         Role::withTrashed()->find($id)->restore();

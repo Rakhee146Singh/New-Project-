@@ -9,9 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PermissionRole extends Model
 {
-    use Uuids;
-
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuids;
     protected $dates = ['deleted_at'];
 
     protected $fillable = ([

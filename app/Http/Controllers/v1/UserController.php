@@ -16,6 +16,7 @@ class UserController extends Controller
     */
     public function list(Request $request)
     {
+        //validation for searching,sorting fields
         $request->validate([
             'first_name'    => 'required|string',
             'sortOrder'     => 'required|in:asc,desc',
@@ -23,15 +24,19 @@ class UserController extends Controller
             'perpage'       => 'required|integer',
             'currentPage'   => 'required|integer'
         ]);
+        //pass query for permission with searching,sorting and filters
         $users = User::query()->where("first_name", "LIKE", "%{$request->first_name}%");
         if ($request->sortField && $request->sortOrder) {
             $users = $users->orderBy($request->sortField, $request->sortOrder);
         } else {
             $users = $users->orderBy('id', 'DESC');
         };
+        //pagination code
         $perpage = $request->perpage;
         $currentPage = $request->currentPage;
         $users = $users->skip($perpage * ($currentPage - 1))->take($perpage);
+
+        //response in json with success message
         return response()->json([
             'success' => true,
             'message' => "User View",
@@ -39,21 +44,27 @@ class UserController extends Controller
         ]);
     }
 
+    /*
+        Create new User and Roles
+        Validation of data and reponse with success message
+    */
     public function create(Request $request)
     {
         $request->validate([
             'first_name'             => 'required',
             'last_name'              => 'required',
-            'email'                  => 'required|email',
+            'email'                  => 'required',
             'password'               => 'required|min:6',
             'password_confirmation'  => 'required|same:password',
             'code'                   => 'required',
             'type'                   => 'required',
-            'roles.*'               => 'required|array',
+            'roles.*'                => 'required|array',
             'roles.*.role_id'        => 'required|string'
         ]);
         $request['password'] = Hash::make($request->password);
         $user = User::create($request->only('first_name', 'last_name', 'email', 'password', 'code', 'type'));
+
+        //enter data in pivot table
         $user->roles()->attach($request->roles);
         return response()->json([
             'success' => true,
@@ -62,6 +73,10 @@ class UserController extends Controller
         ]);
     }
 
+    /*
+        Showing User Data of particular id
+        fetched data to be edited
+    */
     public function show($id)
     {
         $user = User::with('roles')->findOrFail($id);
@@ -71,6 +86,10 @@ class UserController extends Controller
         ]);
     }
 
+    /*
+        Updating User with Roles data
+        Validation of data and reponse with updated message
+    */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -93,6 +112,7 @@ class UserController extends Controller
 
     /*
         Soft and Hard Deletion of Users Data
+        Response in json with success message
     */
     public function softDelete(Request $request, $id)
     {
@@ -117,6 +137,10 @@ class UserController extends Controller
         ]);
     }
 
+    /*
+        Restore of User Data
+        Response in json with success message
+    */
     public function restore($id)
     {
         User::withTrashed()->find($id)->restore();

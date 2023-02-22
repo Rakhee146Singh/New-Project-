@@ -9,9 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ModulePermission extends Model
 {
-    use Uuids;
-
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuids;
     protected $dates = ['deleted_at'];
 
     public $table = 'module_permissions';
