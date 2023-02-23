@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
-use App\Http\Traits\Uuids;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Role extends Model
+class Role extends BaseModel
 {
-    use HasFactory, SoftDeletes, Uuids;
+    use HasFactory, SoftDeletes;
 
+    protected $keyType = 'string';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
     protected $dates = ['deleted_at'];
 
     public $table = 'roles';
@@ -19,23 +21,36 @@ class Role extends Model
         'name',
         'description',
         'is_active',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
-    //Function for role belongs to many users
+    /**
+     * Function for role belongs to many users
+     **/
     public function users()
     {
         return $this->belongsToMany(User::class, 'role_users');
     }
 
-    //Function for role belongs to many permissions
+    /**
+     * Function for role belongs to many permissions
+     **/
     public function permissions()
     {
         return $this->belongsToMany(Permission::class, 'permission_roles');
     }
 
-    //function for checking access of roles is true or false
+    /**
+     * function for checking access of roles is true or false
+     **/
     public function hasRole($modules, $permissions)
     {
-        return $this->permissions()->first()->hasPermission($modules, $permissions);
+        // dd($modules, $permissions);
+        foreach ($this->permissions as $permission) {
+            // dd($permission);
+            return $permission->hasPermission($modules, $permissions);
+        }
     }
 }

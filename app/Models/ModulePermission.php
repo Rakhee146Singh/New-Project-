@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use App\Http\Traits\Uuids;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class ModulePermission extends Model
+class ModulePermission extends BaseModel
 {
-    use HasFactory, SoftDeletes, Uuids;
+    use HasFactory, SoftDeletes;
+
+    protected $keyType = 'string';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
     protected $dates = ['deleted_at'];
 
     public $table = 'module_permissions';
@@ -20,6 +23,9 @@ class ModulePermission extends Model
         'add_access',
         'edit_access',
         'delete_access',
-        'view_access'
+        'view_access',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ]);
 }

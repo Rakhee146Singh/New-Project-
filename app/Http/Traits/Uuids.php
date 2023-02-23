@@ -9,7 +9,7 @@ trait Uuids
     /**
      * Boot function from Laravel.
      */
-    protected static function boot()
+    public static function boot()
     {
         parent::boot();
         static::creating(function ($model) {

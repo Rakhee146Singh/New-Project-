@@ -9,10 +9,11 @@ use App\Http\Controllers\Controller;
 
 class PermissionController extends Controller
 {
-    /*
-        Listing of Permissions and Modules Data
-        Showing Data with json response
-    */
+    /**
+     * API of listing Permissions data.
+     *
+     * @return $permissions
+     */
     public function list(Request $request)
     {
         //validation for searching,sorting fields
@@ -24,16 +25,25 @@ class PermissionController extends Controller
             'currentPage'   => 'required|integer'
         ]);
         //pass query for permission with searching,sorting and filters
-        $permissions = Permission::query()->where("name", "LIKE", "%{$request->name}%");
+        $permissions = Permission::query();
         if ($request->sortField && $request->sortOrder) {
             $permissions = $permissions->orderBy($request->sortField, $request->sortOrder);
         } else {
             $permissions = $permissions->orderBy('id', 'DESC');
         }
+
+
+
+
+
+
+        if (isset($request->name)) {
+            $permissions->where("name", "LIKE", "%{$request->name}%");
+        }
         //pagination code
-        $perpage = $request->perpage;
+        $perPage = $request->perpage;
         $currentPage = $request->currentPage;
-        $permissions = $permissions->skip($perpage * ($currentPage - 1))->take($perpage);
+        $permissions = $permissions->skip($perPage * ($currentPage - 1))->take($perPage);
 
         //response in json with success message
         return response()->json([
@@ -43,10 +53,12 @@ class PermissionController extends Controller
         ]);
     }
 
-    /*
-        Create new Permission with multiple Modules access selection
-        Validation of data and reponse with success message
-    */
+    /**
+     * API of new create Permission.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response $permission
+     */
     public function create(Request $request)
     {
         $request->validate([
@@ -68,10 +80,12 @@ class PermissionController extends Controller
         ]);
     }
 
-    /*
-        Showing Permission Data of particaular id
-        fetched data to be updated
-    */
+    /**
+     * API to get Permission with $id.
+     *
+     * @param  \App\Permission  $id
+     * @return \Illuminate\Http\Response $permission
+     */
     public function show($id)
     {
         $permission = Permission::with('modules')->findOrFail($id);
@@ -81,10 +95,12 @@ class PermissionController extends Controller
         ]);
     }
 
-    /*
-        Updating Permission with Modules Data
-        Validation of data and reponse with updated message
-    */
+    /**
+     * API of Update Permission Data.
+     *
+     * @param  \App\Permission  $id
+     * @return \Illuminate\Http\Response
+     */
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -97,9 +113,13 @@ class PermissionController extends Controller
             'modules.*.delete_access'   => 'required|bool',
             'modules.*.view_access'     => 'required|bool'
         ]);
-
+        $moduleIds = array_column($request->modules, 'module_id');
         //field to be updated with particular module access to be given
         $permission = Permission::findOrFail($id);
+        $data = ModulePermission::where('permission_id', $permission->id)->whereNotIn('module_id', $moduleIds);
+        if ($data->count() > 0) {
+            $data->forceDelete();
+        }
         $permission->update($request->only('name', 'description'));
         foreach ($request['modules'] as $module) {
             ModulePermission::updateOrCreate(
@@ -121,10 +141,12 @@ class PermissionController extends Controller
         ]);
     }
 
-    /*
-        Soft and Hard Deletion of Permission Data
-        Response in json with success message
-    */
+    /**
+     * API of Delete Permission data.
+     *
+     * @param  \App\Permission  $id
+     * @return \Illuminate\Http\Response
+     */
     public function softDelete(Request $request, $id)
     {
         $permission = Permission::findOrFail($id);
@@ -148,10 +170,12 @@ class PermissionController extends Controller
         ]);
     }
 
-    /*
-        Restore of Permission and Module Data
-        Response in json with success message
-    */
+    /**
+     * API of restore Permission Data.
+     *
+     * @param  \App\Permission  $id
+     * @return \Illuminate\Http\Response
+     */
     public function restore($id)
     {
         Permission::whereId($id)->withTrashed()->restore();

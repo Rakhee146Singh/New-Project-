@@ -10,10 +10,11 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /*
-        Listing of Users and Roles Data
-        Showing Data with json response
-    */
+    /**
+     * API of listing Users data.
+     *
+     * @return $users
+     */
     public function list(Request $request)
     {
         //validation for searching,sorting fields
@@ -25,16 +26,20 @@ class UserController extends Controller
             'currentPage'   => 'required|integer'
         ]);
         //pass query for permission with searching,sorting and filters
-        $users = User::query()->where("first_name", "LIKE", "%{$request->first_name}%");
+        $users = User::query();
         if ($request->sortField && $request->sortOrder) {
             $users = $users->orderBy($request->sortField, $request->sortOrder);
         } else {
             $users = $users->orderBy('id', 'DESC');
         };
+
+        if (isset($request->name)) {
+            $users->where("first_name", "LIKE", "%{$request->first_name}%");
+        }
         //pagination code
-        $perpage = $request->perpage;
+        $perPage = $request->perpage;
         $currentPage = $request->currentPage;
-        $users = $users->skip($perpage * ($currentPage - 1))->take($perpage);
+        $users = $users->skip($perPage * ($currentPage - 1))->take($perPage);
 
         //response in json with success message
         return response()->json([
@@ -44,10 +49,12 @@ class UserController extends Controller
         ]);
     }
 
-    /*
-        Create new User and Roles
-        Validation of data and reponse with success message
-    */
+    /**
+     * API of new create User.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response $user
+     */
     public function create(Request $request)
     {
         $request->validate([
@@ -73,10 +80,12 @@ class UserController extends Controller
         ]);
     }
 
-    /*
-        Showing User Data of particular id
-        fetched data to be edited
-    */
+    /**
+     * API to get User with $id.
+     *
+     * @param  \App\User  $id
+     * @return \Illuminate\Http\Response $user
+     */
     public function show($id)
     {
         $user = User::with('roles')->findOrFail($id);
@@ -86,10 +95,12 @@ class UserController extends Controller
         ]);
     }
 
-    /*
-        Updating User with Roles data
-        Validation of data and reponse with updated message
-    */
+    /**
+     * API of Update User Data.
+     *
+     * @param  \App\User  $id
+     * @return \Illuminate\Http\Response
+     */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -110,10 +121,12 @@ class UserController extends Controller
         ]);
     }
 
-    /*
-        Soft and Hard Deletion of Users Data
-        Response in json with success message
-    */
+    /**
+     * API of Delete User data.
+     *
+     * @param  \App\User  $id
+     * @return \Illuminate\Http\Response
+     */
     public function softDelete(Request $request, $id)
     {
         $user = User::findOrFail($id);
@@ -137,25 +150,18 @@ class UserController extends Controller
         ]);
     }
 
-    /*
-        Restore of User Data
-        Response in json with success message
-    */
+    /**
+     * API of restore User Data.
+     *
+     * @param  \App\User  $id
+     * @return \Illuminate\Http\Response
+     */
     public function restore($id)
     {
         User::withTrashed()->find($id)->restore();
         return response()->json([
             'success' => true,
             'message' => "Restored Data Successfully",
-        ]);
-    }
-
-    public function restoreAll()
-    {
-        User::onlyTrashed()->restore();
-        return response()->json([
-            'success' => true,
-            'message' => "Restored All Data Successfully",
         ]);
     }
 }

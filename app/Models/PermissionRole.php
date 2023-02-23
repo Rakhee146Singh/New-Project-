@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use App\Http\Traits\Uuids;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\BaseModel;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class PermissionRole extends Model
+class PermissionRole extends BaseModel
 {
-    use HasFactory, SoftDeletes, Uuids;
+    use HasFactory, SoftDeletes;
     protected $dates = ['deleted_at'];
 
     protected $fillable = ([
         'role_id',
-        'permission_id'
+        'permission_id',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ]);
 }

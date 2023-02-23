@@ -9,10 +9,11 @@ use App\Http\Controllers\Controller;
 
 class ModuleController extends Controller
 {
-    /*
-        Listing of Modules Data
-        Showing Data with json response
-    */
+    /**
+     * API of listing Modules data.
+     *
+     * @return $modules
+     */
     public function list(Request $request)
     {
         //validation for searching,sorting fields
@@ -24,16 +25,20 @@ class ModuleController extends Controller
             'currentPage'   => 'required|integer'
         ]);
         //pass query for permission with searching,sorting and filters
-        $modules = Module::query()->where("name", "LIKE", "%{$request->name}%");
+        $modules = Module::query();
         if ($request->sortField && $request->sortOrder) {
             $modules = $modules->orderBy($request->sortField, $request->sortOrder);
         } else {
             $modules = $modules->orderBy('id', 'DESC');
         };
+
+        if (isset($request->name)) {
+            $modules->where("name", "LIKE", "%{$request->name}%");
+        }
         //pagination code
-        $perpage = $request->perpage;
+        $perPage = $request->perpage;
         $currentPage = $request->currentPage;
-        $modules = $modules->skip($perpage * ($currentPage - 1))->take($perpage);
+        $modules = $modules->skip($perPage * ($currentPage - 1))->take($perPage);
 
         //response in json with success message
         return response()->json([
@@ -43,10 +48,12 @@ class ModuleController extends Controller
         ]);
     }
 
-    /*
-        Create new Module
-        Validation of data and reponse with success message
-    */
+    /**
+     * API of new create Module.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response $module
+     */
     public function create(Request $request)
     {
         $request->validate([
@@ -62,10 +69,12 @@ class ModuleController extends Controller
         ]);
     }
 
-    /*
-        Showing Module Data of particular id
-        fetched data to be edited
-    */
+    /**
+     * API to get Module with $id.
+     *
+     * @param  \App\Module  $id
+     * @return \Illuminate\Http\Response $module
+     */
     public function show($id)
     {
         $module = Module::findOrFail($id);
@@ -75,16 +84,18 @@ class ModuleController extends Controller
         ]);
     }
 
-    /*
-        Updating Module Data
-        Validation of data and reponse with updated message
-    */
+    /**
+     * API of Update Module Data.
+     *
+     * @param  \App\Module  $id
+     * @return \Illuminate\Http\Response
+     */
     public function update(Request $request, $id)
     {
         $module = Module::findOrFail($id);
         $request->validate([
             'module_code'   => 'required|max:6',
-            'name'          => 'required|apha',
+            'name'          => 'required',
             'is_in_menu'    => 'required'
         ]);
         $module->update($request->only('name', 'module_code', 'is_in_menu'));
@@ -94,10 +105,12 @@ class ModuleController extends Controller
         ]);
     }
 
-    /*
-        Soft and Hard Deletion of Module Data
-        Response in json with success message
-    */
+    /**
+     * API of Delete Module data.
+     *
+     * @param  \App\Module  $id
+     * @return \Illuminate\Http\Response
+     */
     public function softDelete($id, Request $request)
     {
         $request->validate([
@@ -114,10 +127,12 @@ class ModuleController extends Controller
         ]);
     }
 
-    /*
-        Restore of Module Data
-        Response in json with success message
-    */
+    /**
+     * API of restore Module Data.
+     *
+     * @param  \App\Module  $id
+     * @return \Illuminate\Http\Response
+     */
     public function restore($id)
     {
         Module::withTrashed()->find($id)->restore();

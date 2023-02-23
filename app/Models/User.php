@@ -3,7 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Http\Traits\Uuids;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -12,9 +12,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, Uuids;
+    use HasApiTokens, HasFactory, Notifiable;
 
     use SoftDeletes;
+
+    protected $keyType = 'string';
+    protected $primaryKey = 'id';
+    public $incrementing = false;
     protected $dates = ['deleted_at'];
     /**
      * The attributes that are mass assignable.
@@ -29,7 +33,10 @@ class User extends Authenticatable
         'is_active',
         'is_first_login',
         'code',
-        'type'
+        'type',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     /**
@@ -50,16 +57,46 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-
-    //Function for user belongs to many roles
+    /**
+     * Function for user belongs to many roles
+     **/
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_users');
     }
 
-    //function for checking access of users is true or false
+    /**
+     * function for checking access of users is true or false
+     **/
     public function hasAccess($modules, $permissions)
     {
-        return $this->roles()->first()->hasRole($modules, $permissions);
+        // dd($modules, $permissions);
+        foreach ($this->roles as $role) {
+            // dd($role);
+            return $role->hasRole($modules, $permissions);
+        }
+    }
+
+    /**
+     * function for creating or updating users data
+     **/
+    public static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = Str::uuid()->toString();
+            }
+        });
+
+        static::creating(function ($model) {
+            $model->created_by = auth()->user() ? auth()->user()->id : User::where('type', 'superadmin')->first()->id;
+        });
+        static::updating(function ($model) {
+            $model->updated_by = auth()->user() ? auth()->user()->id : User::where('type', 'superadmin')->first()->id;
+        });
+        static::deleting(function ($model) {
+            $model->updated_by = auth()->user() ? auth()->user()->id : User::where('type', 'superadmin')->first()->id;
+        });
     }
 }

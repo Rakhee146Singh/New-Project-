@@ -9,10 +9,11 @@ use App\Http\Controllers\Controller;
 
 class RoleController extends Controller
 {
-    /*
-        Listing of Roles and Permissions Data
-        Showing Data with json response
-    */
+    /**
+     * API of listing Roles data.
+     *
+     * @return $roles
+     */
     public function list(Request $request)
     {
         //validation for searching,sorting fields
@@ -24,16 +25,20 @@ class RoleController extends Controller
             'currentPage'   => 'required|integer'
         ]);
         //pass query for permission with searching,sorting and filters
-        $roles = Role::query()->where("name", "LIKE", "%{$request->name}%");
+        $roles = Role::query();
         if ($request->sortField && $request->sortOrder) {
             $roles = $roles->orderBy($request->sortField, $request->sortOrder);
         } else {
             $roles = $roles->orderBy('id', 'DESC');
         }
+
+        if (isset($request->name)) {
+            $roles->where("name", "LIKE", "%{$request->name}%");
+        }
         //pagination code
-        $perpage = $request->perpage;
+        $perPage = $request->perpage;
         $currentPage = $request->currentPage;
-        $roles = $roles->skip($perpage * ($currentPage - 1))->take($perpage);
+        $roles = $roles->skip($perPage * ($currentPage - 1))->take($perPage);
 
         //response in json with success message
         return response()->json([
@@ -43,10 +48,12 @@ class RoleController extends Controller
         ]);
     }
 
-    /*
-        Create new Role and Permissions
-        Validation of data and reponse with success message
-    */
+    /**
+     * API of new create Role.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response $role
+     */
     public function create(Request $request)
     {
         $request->validate([
@@ -65,10 +72,12 @@ class RoleController extends Controller
         ]);
     }
 
-    /*
-        Showing Role Data of particular id
-        fetched data to be edited
-    */
+    /**
+     * API to get Role with $id.
+     *
+     * @param  \App\Role  $id
+     * @return \Illuminate\Http\Response $role
+     */
     public function show($id)
     {
         $role = Role::with('permissions')->findOrFail($id);
@@ -78,10 +87,12 @@ class RoleController extends Controller
         ]);
     }
 
-    /*
-        Updating Role with Permission Data
-        Validation of data and reponse with updated message
-    */
+    /**
+     * API of Update Role Data.
+     *
+     * @param  \App\Role  $id
+     * @return \Illuminate\Http\Response
+     */
     public function update(Request $request, $id)
     {
         $role = Role::findOrFail($id);
@@ -99,10 +110,12 @@ class RoleController extends Controller
         ]);
     }
 
-    /*
-        Soft and Hard Deletion of Role Data
-        Response in json with success message
-    */
+    /**
+     * API of Delete Module data.
+     *
+     * @param  \App\Role  $id
+     * @return \Illuminate\Http\Response
+     */
     public function softDelete(Request $request, $id)
     {
         $role = Role::findOrFail($id);
@@ -126,25 +139,18 @@ class RoleController extends Controller
         ]);
     }
 
-    /*
-        Restore of Role Data
-        Response in json with success message
-    */
+    /**
+     * API of restore Module Data.
+     *
+     * @param  \App\Role  $id
+     * @return \Illuminate\Http\Response
+     */
     public function restore($id)
     {
         Role::withTrashed()->find($id)->restore();
         return response()->json([
             'success' => true,
             'message' => "Restored Data Successfully",
-        ]);
-    }
-
-    public function restoreAll()
-    {
-        Role::onlyTrashed()->restore();
-        return response()->json([
-            'success' => true,
-            'message' => "Restored All Data Successfully",
         ]);
     }
 }
