@@ -32,11 +32,6 @@ class PermissionController extends Controller
             $permissions = $permissions->orderBy('id', 'DESC');
         }
 
-
-
-
-
-
         if (isset($request->name)) {
             $permissions->where("name", "LIKE", "%{$request->name}%");
         }
